@@ -1,2 +1,3 @@
 rootProject.name='XHHttp'
 include ':app'
+include ':xhhttp'
