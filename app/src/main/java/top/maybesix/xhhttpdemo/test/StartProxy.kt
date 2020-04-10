@@ -11,7 +11,6 @@ class StartProxy(private var start: StarInterface) :StarInterface {
         println("经纪人提前准备唱歌场地")
         start.sing()
         println("经纪人进行唱歌后的善后工作")
-
     }
 
     override fun dance() {

@@ -1,5 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="top.maybesix.xhhttp" >
     <uses-permission android:name="android.permission.INTERNET" />
-
+    <application>
+        <provider
+            android:name=".provider.ApplicationContextProvider"
+            android:authorities="${applicationId}.kt-wing-init-provider"
+            android:exported="false"/>
+    </application>
 </manifest>
