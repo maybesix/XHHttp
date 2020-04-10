@@ -15,8 +15,7 @@ interface HttpRequest {
         val instance = XHHttp.getInstance(HttpRequest::class.java)
     }
 
-    @GET("article/list/0/json?")
-    fun getJson(_callback: ObserverCallBack?,
-                cid: String)
+    @GET("/article/list/0/json?")
+    fun getJson(_callback: ObserverCallBack?)
 
 }

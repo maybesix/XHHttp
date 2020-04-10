@@ -4,12 +4,15 @@ import android.os.Handler
 import android.os.Looper
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.callback.ObserverCallBack
+import top.maybesix.xhhttp.exception.HttpException
 import top.maybesix.xhhttp.request.GET
 import top.maybesix.xhhttp.request.POST
-import top.maybesix.xhhttp.util.CommUtils.log
+import top.maybesix.xhhttp.util.XHHttpUtils
+import top.maybesix.xhhttp.util.XHHttpUtils.log
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.net.URL
+import java.net.UnknownHostException
 import kotlin.concurrent.thread
 import kotlin.reflect.jvm.kotlinFunction
 
@@ -24,6 +27,15 @@ class BaseInvocationHandler : InvocationHandler {
     override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         //ps:这里为了方便就直接new Thread了,如果是使用的话可以使用线程池或者kt协程,消耗会低很多,一般项目中是不允许直接new Thread的
         thread {
+            if (XHHttp.baseUrl.isEmpty()) {
+                throw HttpException("baseUrl不能为空")
+            }
+            if (
+                !(XHHttp.baseUrl.startsWith("http://") || XHHttp.baseUrl.startsWith("https://"))
+                || !XHHttpUtils.checkUrl(XHHttp.baseUrl)
+            ) {
+                throw HttpException("baseUrl不合法")
+            }
             //获取方法的注解,先获取get注解,如果为空就获取post注解; ps:自己用的时候可以先获取常用的注解,这样就不用判断两次了,比如项目里大部分都是post请求,那就先获取POST
             val annotation =
                 method?.getAnnotation(GET::class.java)
@@ -84,18 +96,26 @@ class BaseInvocationHandler : InvocationHandler {
         handler.post {
             callback?.onStart()
         }
-        //此处请求网络
-        val data = URL(url.toString()).readText()
+        try {
+            //此处请求网络
+            val data = URL(url.toString()).readText()
 
-        if (XHHttp.isDebug) {
-            data.log()
+
+            if (XHHttp.isDebug) {
+                data.log()
+            }
+            handler.post {
+                //在主线程回调
+                callback?.onHandle(data, 0, 0)
+                callback?.onComplete()
+            }
+        } catch (e: UnknownHostException) {
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
-        handler.post {
-            //在主线程回调
-            callback?.onHandle(data, 0, 0)
-            callback?.onComplete()
-        }
+
     }
 
 }

@@ -2,9 +2,9 @@ package top.maybesix.xhhttpdemo
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.dsl.callbackOf
-import top.maybesix.xhhttp.util.CommUtils.log
-import kotlin.concurrent.thread
+import top.maybesix.xhhttp.util.XHHttpUtils.log
 
 class MainActivity : AppCompatActivity() {
 
@@ -12,17 +12,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        thread {
-            HttpRequest.instance.getJson(callbackOf<String> {
-                success {
-                    "请求成功".log()
-                    it.log()
-                }
-                failed {
-                    "请求失败".log()
-                }
-            }, "0")
-        }
+        XHHttp.baseUrl = "https://www.wanandroid.com/"
+
+        HttpRequest.instance.getJson(callbackOf<String> {
+            success {
+                "请求成功".log()
+                it.log()
+            }
+            failed {
+                "请求失败".log()
+            }
+        })
+
 
     }
 }

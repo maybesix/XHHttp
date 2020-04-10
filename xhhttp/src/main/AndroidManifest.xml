@@ -4,7 +4,7 @@
     <application>
         <provider
             android:name=".provider.ApplicationContextProvider"
-            android:authorities="${applicationId}.kt-wing-init-provider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"/>
     </application>
 </manifest>

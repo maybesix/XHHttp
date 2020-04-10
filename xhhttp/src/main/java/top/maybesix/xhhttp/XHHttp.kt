@@ -66,9 +66,6 @@ object XHHttp {
         if (context == null) {
             throw HttpException("初始化XHHttp失败！")
         }
-        if (baseUrl.isEmpty()) {
-            throw HttpException("baseUrl不能为空")
-        }
         return (Proxy.newProxyInstance(
             clazz.classLoader,
             arrayOf(clazz),
