@@ -10,7 +10,14 @@ import top.maybesix.xhhttp.XHHttp
  * @desc TODO.
  */
 object XHHttpUtils {
-    fun Any?.log() = Log.d(XHHttp.TAG, this.toString())
+    fun Any?.logD() =
+        if (XHHttp.isDebug)
+            Log.d(XHHttp.TAG, this.toString())
+        else
+            -1
+    fun Any?.log() =
+            Log.i(XHHttp.TAG, this.toString())
+
 
     /**
      * 检查url是否合法

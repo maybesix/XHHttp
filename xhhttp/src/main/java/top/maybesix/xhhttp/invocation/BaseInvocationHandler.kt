@@ -8,7 +8,7 @@ import top.maybesix.xhhttp.exception.HttpException
 import top.maybesix.xhhttp.request.GET
 import top.maybesix.xhhttp.request.POST
 import top.maybesix.xhhttp.util.XHHttpUtils
-import top.maybesix.xhhttp.util.XHHttpUtils.log
+import top.maybesix.xhhttp.util.XHHttpUtils.logD
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.net.URL
@@ -36,6 +36,7 @@ class BaseInvocationHandler : InvocationHandler {
             ) {
                 throw HttpException("baseUrl不合法")
             }
+
             //获取方法的注解,先获取get注解,如果为空就获取post注解; ps:自己用的时候可以先获取常用的注解,这样就不用判断两次了,比如项目里大部分都是post请求,那就先获取POST
             val annotation =
                 method?.getAnnotation(GET::class.java)
@@ -90,20 +91,17 @@ class BaseInvocationHandler : InvocationHandler {
         if (url.endsWith('&')) {
             url.deleteCharAt(url.length - 1)
         }
-        if (XHHttp.isDebug) {
-            url.log()
-        }
+        //默认去除空格
+        url.trim()
+        url.logD()
+        //url不能有中文
         handler.post {
             callback?.onStart()
         }
         try {
             //此处请求网络
             val data = URL(url.toString()).readText()
-
-
-            if (XHHttp.isDebug) {
-                data.log()
-            }
+            data.logD()
             handler.post {
                 //在主线程回调
                 callback?.onHandle(data, 0, 0)
