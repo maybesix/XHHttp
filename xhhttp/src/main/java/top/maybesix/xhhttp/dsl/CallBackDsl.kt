@@ -2,6 +2,7 @@ package top.maybesix.xhhttp.dsl
 
 import com.alibaba.fastjson.JSONObject
 import top.maybesix.xhhttp.callback.ObserverCallBack
+import top.maybesix.xhhttp.util.XHHttpUtils.logD
 
 /**
  * @author MaybeSix
@@ -21,6 +22,7 @@ inline fun <reified T> callbackOf(initDsl: CallBackDsl<T>.() -> Unit): ObserverC
 
     return object : ObserverCallBack {
         override fun onStart() {
+            "请求开始 onStart()".logD()
             dsl.mStart?.invoke()
         }
 

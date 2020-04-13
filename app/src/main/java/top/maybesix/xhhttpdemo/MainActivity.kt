@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         XHHttp.baseUrl = "https://www.wanandroid.com/"
-
+        XHHttp.isDebug = true
         HttpRequest.instance.getJson(callbackOf<String> {
             success {
                 "请求成功".log()
@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
             failed {
                 "请求失败".log()
             }
-        })
+        },"0","xiaoming")
 
 
     }

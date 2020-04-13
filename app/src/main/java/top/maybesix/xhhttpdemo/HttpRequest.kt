@@ -3,6 +3,7 @@ package top.maybesix.xhhttpdemo
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.callback.ObserverCallBack
 import top.maybesix.xhhttp.request.GET
+import top.maybesix.xhhttp.request.Path
 
 
 /**
@@ -15,7 +16,7 @@ interface HttpRequest {
         val instance = XHHttp.getInstance(HttpRequest::class.java)
     }
 
-    @GET("/article/list/0/json?")
-    fun getJson(_callback: ObserverCallBack?)
+    @GET("/article/list/{path}/json")
+    fun getJson(_callback: ObserverCallBack?, @Path("path") page: String, name: String)
 
 }
