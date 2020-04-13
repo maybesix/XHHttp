@@ -1,6 +1,5 @@
 package top.maybesix.xhhttpdemo
 
-import top.maybesix.xhhttp.Person
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.annotation.GET
 import top.maybesix.xhhttp.annotation.Params

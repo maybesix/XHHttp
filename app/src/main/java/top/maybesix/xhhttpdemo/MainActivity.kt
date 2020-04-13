@@ -2,7 +2,6 @@ package top.maybesix.xhhttpdemo
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import top.maybesix.xhhttp.Person
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.dsl.callbackOf
 

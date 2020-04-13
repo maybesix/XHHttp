@@ -1,4 +1,4 @@
-package top.maybesix.xhhttp
+package top.maybesix.xhhttpdemo
 
 import top.maybesix.xhhttp.annotation.HttpIgnore
 import top.maybesix.xhhttp.annotation.HttpRename
