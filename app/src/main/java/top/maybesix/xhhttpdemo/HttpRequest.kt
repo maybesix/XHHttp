@@ -5,6 +5,7 @@ import top.maybesix.xhhttp.annotation.GET
 import top.maybesix.xhhttp.annotation.Params
 import top.maybesix.xhhttp.annotation.Path
 import top.maybesix.xhhttp.callback.ObserverCallBack
+import top.maybesix.xhhttp.config.XHHttpConfig
 
 
 /**
@@ -14,8 +15,11 @@ import top.maybesix.xhhttp.callback.ObserverCallBack
  */
 interface HttpRequest {
     companion object {
-        val instance = XHHttp.getInstance(HttpRequest::class.java)
+        fun instance(config: XHHttpConfig?=null): HttpRequest {
+           return XHHttp.getInstance(HttpRequest::class.java, config)
+        }
     }
+
 
     @GET("/article/list/{path}/json")
     fun getJson(_callback: ObserverCallBack?, @Path("path") page: String, name: String)
@@ -27,5 +31,7 @@ interface HttpRequest {
         groupId: String,
         @Params() person: Person
     )
+    @GET("")
+    fun getHidden(_callback: ObserverCallBack?,compainId:String = "123")
 
 }

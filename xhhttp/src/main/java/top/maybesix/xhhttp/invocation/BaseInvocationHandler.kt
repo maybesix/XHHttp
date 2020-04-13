@@ -9,6 +9,7 @@ import okhttp3.Response
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.annotation.*
 import top.maybesix.xhhttp.callback.ObserverCallBack
+import top.maybesix.xhhttp.config.XHHttpConfig
 import top.maybesix.xhhttp.exception.HttpException
 import top.maybesix.xhhttp.util.XHHttpUtils
 import top.maybesix.xhhttp.util.XHHttpUtils.logD
@@ -24,12 +25,12 @@ import kotlin.reflect.jvm.kotlinFunction
  * @date 2020/4/10
  * @desc 具体的代理实现.
  */
-class BaseInvocationHandler : InvocationHandler {
+class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
     val handler = Handler(Looper.getMainLooper())
     var callback: ObserverCallBack? = null
     private var pathUrl: String = ""
 
-    //毁掉函数的名字
+    //回调函数的名字
     var callbackName = ""
 
     override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {

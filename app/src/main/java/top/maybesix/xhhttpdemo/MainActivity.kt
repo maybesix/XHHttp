@@ -3,6 +3,7 @@ package top.maybesix.xhhttpdemo
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import top.maybesix.xhhttp.XHHttp
+import top.maybesix.xhhttp.config.XHHttpConfig
 import top.maybesix.xhhttp.dsl.callbackOf
 
 class MainActivity : AppCompatActivity() {
@@ -22,9 +23,21 @@ class MainActivity : AppCompatActivity() {
 //                "请求失败".log()
 //            }
 //        },"0","xiaoming")
-        HttpRequest.instance.getPerson(callbackOf<String> {
-            success { }
-        },"110","555", Person())
 
+        HttpRequest.instance(
+            XHHttpConfig()
+        ).getPerson(callbackOf<String> {
+            success {
+
+            }
+            failed {
+
+            }
+        },"110","555", Person())
+        HttpRequest.instance().getHidden(callbackOf<String> {
+            success {
+
+            }
+        })
     }
 }

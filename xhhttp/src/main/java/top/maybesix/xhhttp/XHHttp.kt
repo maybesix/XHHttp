@@ -63,14 +63,14 @@ object XHHttp {
      */
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T> getInstance(clazz: Class<T>,config: XHHttpConfig = XHHttpConfig()): T {
+    fun <T> getInstance(clazz: Class<T>,config: XHHttpConfig ?): T {
         if (context == null) {
             throw HttpException("初始化XHHttp失败！")
         }
         return (Proxy.newProxyInstance(
             clazz.classLoader,
             arrayOf(clazz),
-            BaseInvocationHandler()
+            BaseInvocationHandler(config)
         )) as T
     }
 
