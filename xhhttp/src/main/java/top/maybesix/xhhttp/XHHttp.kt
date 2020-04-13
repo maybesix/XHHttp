@@ -2,6 +2,7 @@ package top.maybesix.xhhttp
 
 import android.content.Context
 import okhttp3.internal.http.HttpHeaders
+import top.maybesix.xhhttp.config.XHHttpConfig
 import top.maybesix.xhhttp.exception.HttpException
 import top.maybesix.xhhttp.invocation.BaseInvocationHandler
 import java.lang.reflect.Proxy
@@ -62,7 +63,7 @@ object XHHttp {
      */
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T> getInstance(clazz: Class<T>): T {
+    fun <T> getInstance(clazz: Class<T>,config: XHHttpConfig = XHHttpConfig()): T {
         if (context == null) {
             throw HttpException("初始化XHHttp失败！")
         }

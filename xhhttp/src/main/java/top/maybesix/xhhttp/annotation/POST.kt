@@ -1,4 +1,4 @@
-package top.maybesix.xhhttp.request
+package top.maybesix.xhhttp.annotation
 /**
  * @author MaybeSix
  * @date 2020/4/10

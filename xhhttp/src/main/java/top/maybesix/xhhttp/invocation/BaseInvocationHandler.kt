@@ -7,11 +7,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import top.maybesix.xhhttp.XHHttp
+import top.maybesix.xhhttp.annotation.*
 import top.maybesix.xhhttp.callback.ObserverCallBack
 import top.maybesix.xhhttp.exception.HttpException
-import top.maybesix.xhhttp.request.GET
-import top.maybesix.xhhttp.request.POST
-import top.maybesix.xhhttp.request.Path
 import top.maybesix.xhhttp.util.XHHttpUtils
 import top.maybesix.xhhttp.util.XHHttpUtils.logD
 import java.lang.reflect.InvocationHandler
@@ -28,6 +26,11 @@ import kotlin.reflect.jvm.kotlinFunction
  */
 class BaseInvocationHandler : InvocationHandler {
     val handler = Handler(Looper.getMainLooper())
+    var callback: ObserverCallBack? = null
+    private var pathUrl: String = ""
+
+    //毁掉函数的名字
+    var callbackName = ""
 
     override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         //ps:这里为了方便就直接new Thread了,如果是使用的话可以使用线程池或者kt协程,消耗会低很多,一般项目中是不允许直接new Thread的
@@ -66,50 +69,12 @@ class BaseInvocationHandler : InvocationHandler {
     //get请求
     private fun startGet(proxy: Any?, method: Method?, args: Array<out Any>?, get: GET) {
         //获取url并拼接
-        val callbackName = get.callbackName
-        var callback: ObserverCallBack? = null
-        //是否追加了'?'
-        var isAddQuestionMark = false
-        var urlPath = get.url
-
-        //此处用反射遍历参数
-        method?.kotlinFunction?.parameters?.forEachIndexed { index, kParameter ->
-            when (kParameter.name) {
-                null -> {
-                    //接口本身的对象,我们不需要
-                }
-                callbackName -> {//回调对象,ps:index-1是因为parameters的第0位置是代理类对象
-                    callback = args?.get(index - 1) as? ObserverCallBack
-                }
-                else -> {
-                    //如果被标注了，则替换路径响应字符串，否则在路径后边拼接
-                    if (kParameter.annotations.isNotEmpty()) {
-                        kParameter.annotations.forEach {
-                            if (it is Path) {
-                                val oldStr = it.value
-                                val newStr = args?.get(index - 1).toString()
-                                urlPath = urlPath.replace("{$oldStr}", newStr)
-                            }
-                        }
-                    } else {
-                        //进行拼接url
-                        if (!isAddQuestionMark) {
-                            urlPath = "$urlPath?"
-                            isAddQuestionMark = true
-                        }
-                        //依次将参数添加到url上
-                        urlPath = "$urlPath${kParameter.name}=${args?.get(index - 1)}&"
-                    }
-
-                }
-            }
-        }
-        //清除最后一个&
-        if (urlPath.last() == '&') {
-            urlPath = urlPath.substring(0, urlPath.length - 1);
-        }
+        callbackName = get.callbackName
+        //获取接口地址
+        pathUrl = get.url
+        handleUrlAndCallback(method, args)
         //添加处理过的url的路径
-        val url = XHHttp.baseUrl + urlPath
+        val url = XHHttp.baseUrl + pathUrl
 
         //默认去除空格
         url.trim()
@@ -118,6 +83,7 @@ class BaseInvocationHandler : InvocationHandler {
         handler.post {
             callback?.onStart()
         }
+
         val client = OkHttpClient()
         val request: Request = Request.Builder().url(url).get()
             .build()
@@ -134,21 +100,101 @@ class BaseInvocationHandler : InvocationHandler {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-//        try {
-//            //此处请求网络
-//            val data = URL(url.toString()).readText()
-//            data.logD()
-//            handler.post {
-//                //在主线程回调
-//                callback?.onHandle(data, 0, 0)
-//                callback?.onComplete()
-//            }
-//        } catch (e: UnknownHostException) {
-//            e.printStackTrace()
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//        }
+    }
 
+    /**
+     * 处理参数，添加回调
+     * @param method Method?
+     * @param args Array<out Any>?
+     */
+    private fun handleUrlAndCallback(method: Method?, args: Array<out Any>?) {
+        //是否追加了'?'
+        var isAddQuestionMark = false
+        //参数Map
+        val params = mutableMapOf<String, String>()
+
+        //此处用反射遍历参数
+        method?.kotlinFunction?.parameters?.forEachIndexed { index, kParameter ->
+
+            when (kParameter.name) {
+                null -> {
+                    //接口本身的对象,我们不需要
+                }
+                callbackName -> {
+                    //回调对象,ps:index-1是因为parameters的第0位置是代理类对象
+                    callback = args?.get(index - 1) as? ObserverCallBack
+                }
+                else -> {
+                    //以下处理被注解标注的参数
+                    if (kParameter.annotations.isNotEmpty()) {
+                        kParameter.annotations.forEach {
+                            if (it is Path) {
+                                //如果是Path参数，说明要替换
+                                val oldStr = it.value
+                                val newStr = args?.get(index - 1).toString()
+                                pathUrl = pathUrl.replace("{$oldStr}", newStr)
+                            } else if (it is Params) {
+                                //要把实体类转换成请求参数
+                                val paramObj = args?.get(index - 1)
+                                val fields = paramObj?.javaClass?.declaredFields
+                                //以下为对实体类的注解做判断
+                                fields?.forEach continuing@{ field ->
+                                    var key: String = field.name
+                                    // 允许访问私有字段
+                                    field.isAccessible = true
+                                    if (field.annotations.isNotEmpty()) {
+                                        field.annotations.forEach { annotation ->
+                                            if (annotation is HttpIgnore) {
+                                                return@continuing
+                                            }
+                                            if (annotation is HttpRename) {
+                                                key =
+                                                    field.getAnnotation(HttpRename::class.java)?.value
+                                                        ?: ""
+                                            }
+                                        }
+                                    }
+                                    try {
+                                        // 获取字段的对象
+                                        val obj = field.get(paramObj) ?: return
+                                        // 如果这个是一个普通的参数
+                                        if (obj is Map<*, *>) {
+                                            for (o in obj.keys) {
+                                                if (o != null && obj[o] != null) {
+                                                    params[o.toString()] = obj[o].toString()
+                                                }
+                                            }
+                                        } else {
+                                            params[key] = obj.toString()
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                }
+                            }
+
+                        }
+                    } else {
+                        //依次将参数添加到url上
+                        params[kParameter.name.toString()] = args?.get(index - 1).toString()
+                    }
+                }
+            }
+
+        }
+        //构建参数
+        for ((key, value) in params) {
+            //进行拼接url
+            if (!isAddQuestionMark) {
+                pathUrl = "$pathUrl?"
+                isAddQuestionMark = true
+            }
+            pathUrl = "$pathUrl${key}=${value}&"
+        }
+        //清除最后一个&
+        if (pathUrl.last() == '&') {
+            pathUrl = pathUrl.substring(0, pathUrl.length - 1);
+        }
 
     }
 
