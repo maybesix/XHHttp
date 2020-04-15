@@ -2,10 +2,7 @@ package top.maybesix.xhhttp.invocation
 
 import android.os.Handler
 import android.os.Looper
-import okhttp3.Call
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
 import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.annotation.*
 import top.maybesix.xhhttp.callback.ObserverCallBack
@@ -27,11 +24,7 @@ import kotlin.reflect.jvm.kotlinFunction
  */
 class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
     val handler = Handler(Looper.getMainLooper())
-    var callback: ObserverCallBack? = null
-    private var pathUrl: String = ""
 
-    //回调函数的名字
-    var callbackName = ""
 
     override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         //ps:这里为了方便就直接new Thread了,如果是使用的话可以使用线程池或者kt协程,消耗会低很多,一般项目中是不允许直接new Thread的
@@ -65,17 +58,15 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
     //post请求
     private fun startPost(proxy: Any?, method: Method?, args: Array<out Any>?, post: POST) {
         //post就不写了,大家可以在这里二次封装网络请求,比如使用okhttp,或者使用Socket,甚至可以用别人二次或者三次封装好的网络请求
-    }
-
-    //get请求
-    private fun startGet(proxy: Any?, method: Method?, args: Array<out Any>?, get: GET) {
-        //获取url并拼接
-        callbackName = get.callbackName
-        //获取接口地址
-        pathUrl = get.url
-        handleUrlAndCallback(method, args)
+        //获取接口地址和callback
+        val (completeUrl, params, callback) = handleUrlAndGetCallback(
+            post.url,
+            post.callbackName,
+            method,
+            args
+        )
         //添加处理过的url的路径
-        val url = XHHttp.baseUrl + pathUrl
+        val url = XHHttp.baseUrl + completeUrl
 
         //默认去除空格
         url.trim()
@@ -84,7 +75,62 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
         handler.post {
             callback?.onStart()
         }
+        val client = OkHttpClient()
+        val formBody = FormBody.Builder()
+        for ((k, v) in params) {
+            formBody.add(k, v)
+        }
 
+        val request: Request = Request.Builder().url(url).post(formBody.build())
+            .build()
+        val call: Call = client.newCall(request)
+        try {
+            val response: Response = call.execute()
+            val data = response.body()?.string() ?: ""
+            "请求的结果：$data".logD()
+            //在主线程回调
+            callback?.onHandle(data, 0, 0)
+            callback?.onComplete()
+        } catch (e: UnknownHostException) {
+            e.printStackTrace()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    //get请求
+    private fun startGet(proxy: Any?, method: Method?, args: Array<out Any>?, get: GET) {
+        //获取接口地址和callback
+        var (completeUrl, params, callback) = handleUrlAndGetCallback(
+            get.url,
+            get.callbackName,
+            method,
+            args
+        )
+        //是否追加了'?'
+        var isAddQuestionMark = false
+        //构建参数
+        for ((key, value) in params) {
+            //进行拼接url
+            if (!isAddQuestionMark) {
+                completeUrl = "$completeUrl?"
+                isAddQuestionMark = true
+            }
+            completeUrl = "$completeUrl${key}=${value}&"
+        }
+        //清除最后一个&
+        if (completeUrl.last() == '&') {
+            completeUrl = completeUrl.substring(0, completeUrl.length - 1);
+        }
+        //添加处理过的url的路径
+        val url = XHHttp.baseUrl + completeUrl
+        //默认去除空格
+        url.trim()
+        "Get请求的地址：${url}".logD()
+        //url不能有中文
+        handler.post {
+            callback?.onStart()
+        }
         val client = OkHttpClient()
         val request: Request = Request.Builder().url(url).get()
             .build()
@@ -104,13 +150,19 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
     }
 
     /**
-     * 处理参数，添加回调
+     * 处理参数，返回url和callback
      * @param method Method?
      * @param args Array<out Any>?
      */
-    private fun handleUrlAndCallback(method: Method?, args: Array<out Any>?) {
-        //是否追加了'?'
-        var isAddQuestionMark = false
+    private fun handleUrlAndGetCallback(
+        url: String,
+        callbackName: String,
+        method: Method?,
+        args: Array<out Any>?
+    ): Triple<String, Map<String, String>, ObserverCallBack?> {
+        var pathUrl = url
+        var callback: ObserverCallBack? = null
+
         //参数Map
         val params = mutableMapOf<String, String>()
 
@@ -157,7 +209,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
                                     }
                                     try {
                                         // 获取字段的对象
-                                        val obj = field.get(paramObj) ?: return
+                                        val obj = field.get(paramObj) ?: return@forEachIndexed
                                         // 如果这个是一个普通的参数
                                         if (obj is Map<*, *>) {
                                             for (o in obj.keys) {
@@ -183,20 +235,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
             }
 
         }
-        //构建参数
-        for ((key, value) in params) {
-            //进行拼接url
-            if (!isAddQuestionMark) {
-                pathUrl = "$pathUrl?"
-                isAddQuestionMark = true
-            }
-            pathUrl = "$pathUrl${key}=${value}&"
-        }
-        //清除最后一个&
-        if (pathUrl.last() == '&') {
-            pathUrl = pathUrl.substring(0, pathUrl.length - 1);
-        }
 
+        return Triple(pathUrl, params, callback)
     }
-
 }

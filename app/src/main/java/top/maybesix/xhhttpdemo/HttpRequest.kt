@@ -13,6 +13,7 @@ import top.maybesix.xhhttp.config.XHHttpConfig
  * @date 2020/4/10
  * @desc TODO.
  */
+
 interface HttpRequest {
     companion object {
         fun instance(config: XHHttpConfig?=null): HttpRequest {
