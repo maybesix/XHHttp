@@ -55,7 +55,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
 
     //post请求
     private fun startPost(proxy: Any?, method: Method?, args: Array<out Any>?, post: POST) {
-        //post就不写了,大家可以在这里二次封装网络请求,比如使用okhttp,或者使用Socket,甚至可以用别人二次或者三次封装好的网络请求
+
         //获取接口地址和callback
         val (completeUrl, params, callback) = handleUrlAndGetCallback(
             post.url,
@@ -96,10 +96,18 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
     ): Triple<String, Map<String, String>, ObserverCallBack?> {
         var pathUrl = url
         var callback: ObserverCallBack? = null
-
+        var observerName = callbackName
         //参数Map
         val params = mutableMapOf<String, String>()
-
+        run breaking@{
+            method?.kotlinFunction?.parameters?.forEachIndexed { index, kParameter ->
+                if (kParameter.type.toString() == ObserverCallBack::class.java.name) {
+                    logE("获取到了类型为ObserverCallBack的类")
+                    observerName = kParameter.name ?: callbackName
+                    return@breaking
+                }
+            }
+        }
         //此处用反射遍历参数
         method?.kotlinFunction?.parameters?.forEachIndexed { index, kParameter ->
 
@@ -107,7 +115,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
                 null -> {
                     //接口本身的对象,我们不需要
                 }
-                callbackName -> {
+                observerName -> {
                     //回调对象,ps:index-1是因为parameters的第0位置是代理类对象
                     callback = args?.get(index - 1) as? ObserverCallBack
                 }
@@ -129,7 +137,11 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
                                     var key: String = field.name
                                     // 允许访问私有字段
                                     field.isAccessible = true
+                                    logE("注解isnull? " + field.annotations.isNotEmpty())
+
                                     if (field.annotations.isNotEmpty()) {
+                                        logE("注解不为空 " + key)
+
                                         field.annotations.forEach { annotation ->
                                             if (annotation is ParamIgnore) {
                                                 return@continuing
@@ -138,6 +150,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
                                                 key =
                                                     field.getAnnotation(ParamRename::class.java)?.value
                                                         ?: ""
+                                                logE("ParamRename 获取的key" + key)
                                             }
                                         }
                                     }
@@ -239,9 +252,9 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
         }
         val request = builder.build()
         //打印相关参数
+        logD("=====================request的参数====================")
         request.headers().logD()
         request.body().logD()
-        request.url().logD()
         request.method().logD()
         return request
     }

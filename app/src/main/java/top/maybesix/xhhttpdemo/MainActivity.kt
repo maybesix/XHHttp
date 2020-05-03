@@ -26,12 +26,11 @@ class MainActivity : AppCompatActivity() {
         //直接发起get请求
         btn_get.setOnClickListener {
             HttpRequest.instance().getChapters(callbackOf<String> {
-                success {
-                    showResult(it)
-                }
+                start { }
+                success {}
                 failed { data, error ->
-
                 }
+                complete { }
             })
         }
         //直接发起post请求
@@ -45,6 +44,13 @@ class MainActivity : AppCompatActivity() {
                 "kotlin"
             )
         }
+        HttpRequest.instance().getChapters(callbackOf<String> {
+            start { }
+            success {}
+            failed { data, error ->
+            }
+            complete { }
+        })
         //发起请求，通过@Path注解动态替换url中的字段
         btn_get_path.setOnClickListener {
             HttpRequest.instance().getArticleJson(

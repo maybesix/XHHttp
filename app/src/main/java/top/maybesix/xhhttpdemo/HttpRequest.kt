@@ -24,14 +24,14 @@ interface HttpRequest {
     }
 
     @GET("wxarticle/chapters/json")
-    fun getChapters(_callback: ObserverCallBack?)
+    fun getChapters(_callback: ObserverCallBack)
 
     @GET("article/list/{path}/json")
-    fun getArticleJson(_callback: ObserverCallBack?, @Path("path") page: String)
+    fun getArticleJson(_callback: ObserverCallBack, @Path("path") page: String)
 
 
     @POST("article/query/0/json")
-    fun search(_callback: ObserverCallBack?, k: String = "kotlin")
+    fun search(_callback: ObserverCallBack, k: String = "kotlin")
 
     @GET("article/list/0/json")
     fun getArticleByAuthorName(callBack: ObserverCallBack, @Param authorEntity: Author)

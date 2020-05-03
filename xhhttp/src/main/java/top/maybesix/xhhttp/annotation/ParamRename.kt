@@ -5,6 +5,6 @@ package top.maybesix.xhhttp.annotation
  * @date 2020/4/13
  * @desc 用于实体类参数，重命名字段.
  */
-@Target(AnnotationTarget.VALUE_PARAMETER)
+@Target(AnnotationTarget.FIELD)
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
 annotation class ParamRename(val value:String)

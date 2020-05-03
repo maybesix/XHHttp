@@ -32,7 +32,8 @@ inline fun <reified T> callbackOf(initDsl: CallBackDsl<T>.() -> Unit): ObserverC
             //可以在这里根据业务判断是否请求成功
             //引入fastjson来解析json    implementation 'com.alibaba:fastjson:1.2.67'
             var bean: T? = null
-            var code = errorCode
+            var code: Int
+
             try {
                 bean = JSONObject.parseObject(data, T::class.java)
                 code = 0
@@ -40,6 +41,7 @@ inline fun <reified T> callbackOf(initDsl: CallBackDsl<T>.() -> Unit): ObserverC
                 e.printStackTrace()
                 code = -1
             }
+
             if (code == 0 && bean != null) {
                 "===================onSuccess()===================".logE()
                 handler.post {
