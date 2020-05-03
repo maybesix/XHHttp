@@ -5,6 +5,6 @@ package top.maybesix.xhhttp.annotation
  * @date 2020/4/13
  * @desc TODO.
  */
-@Target(AnnotationTarget.VALUE_PARAMETER)
+@Target(AnnotationTarget.FIELD)
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
-annotation class Params()
+annotation class ApiRename(val value: String)

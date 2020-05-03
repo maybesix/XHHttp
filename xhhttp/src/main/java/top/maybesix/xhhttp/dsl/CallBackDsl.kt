@@ -1,8 +1,9 @@
 package top.maybesix.xhhttp.dsl
 
+import android.os.Looper
 import com.alibaba.fastjson.JSONObject
 import top.maybesix.xhhttp.callback.ObserverCallBack
-import top.maybesix.xhhttp.util.XHHttpUtils.logD
+import top.maybesix.xhhttp.util.XHHttpUtils.logE
 
 /**
  * @author MaybeSix
@@ -16,25 +17,39 @@ import top.maybesix.xhhttp.util.XHHttpUtils.logD
  * 这样就可以调用CallBackDsl的参数和方法
  */
 inline fun <reified T> callbackOf(initDsl: CallBackDsl<T>.() -> Unit): ObserverCallBack {
+    val handler = android.os.Handler(Looper.getMainLooper())
     val dsl = CallBackDsl<T>()
     //初始化dsl
     dsl.initDsl()
 
     return object : ObserverCallBack {
         override fun onStart() {
-            "请求开始 onStart()".logD()
             dsl.mStart?.invoke()
         }
 
-        override fun onHandle(data: String?, encoding: Int, method: Int) {
+        override fun onHandle(data: String?, errorCode: Int) {
 
             //可以在这里根据业务判断是否请求成功
             //引入fastjson来解析json    implementation 'com.alibaba:fastjson:1.2.67'
-            val bean = JSONObject.parseObject(data, T::class.java)
-            if (bean != null) {
-                dsl.mSuccess?.invoke(bean)
+            var bean: T? = null
+            var code = errorCode
+            try {
+                bean = JSONObject.parseObject(data, T::class.java)
+                code = 0
+            } catch (e: Exception) {
+                e.printStackTrace()
+                code = -1
+            }
+            if (code == 0 && bean != null) {
+                "===================onSuccess()===================".logE()
+                handler.post {
+                    dsl.mSuccess?.invoke(bean)
+                }
             } else {
-                dsl.mFailed?.invoke(data)
+                "===================onFailed()===================".logE()
+                handler.post {
+                    dsl.mFailed?.invoke(data, code)
+                }
             }
         }
 
@@ -63,9 +78,9 @@ class CallBackDsl<T> {
     /**
      * 网络请求失败的回调
      */
-    var mFailed: ((data: String?) -> Unit)? = null
+    var mFailed: ((data: String?, error: Int) -> Unit)? = null
 
-    fun failed(listener: (data: String?) -> Unit) {
+    fun failed(listener: (data: String?, error: Int) -> Unit) {
         mFailed = listener
     }
 
