@@ -29,7 +29,6 @@ interface HttpRequest {
     @GET("article/list/{path}/json")
     fun getArticleJson(_callback: ObserverCallBack, @Path("path") page: String)
 
-
     @POST("article/query/0/json")
     fun search(_callback: ObserverCallBack, k: String = "kotlin")
 

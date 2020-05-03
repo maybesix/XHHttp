@@ -66,11 +66,15 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
+        //以实体类为参数
         btn_get_param.setOnClickListener {
             HttpRequest.instance()
                 .getArticleByAuthorName(
-                    callbackOf<String> { },
+                    callbackOf<String> {
+                        success {
+                            showResult(it)
+                        }
+                    },
                     Author("鸿洋", "777")
                 )
         }

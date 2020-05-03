@@ -49,3 +49,7 @@ callbackOf<String> {
 |@Param                  |接口的参数    |用于标注改参数为类|
 |@ParamRename   |参数的类内部|用于标注参数类的某个属性的在构建url的时候的真实字段|
 |@ParamIgnore      |参数的类内部|用于忽略某个字段|
+
+文档详情
+>https://www.jianshu.com/p/024994e8dcf2
+>https://juejin.im/post/5eae55afe51d454dd940636a
