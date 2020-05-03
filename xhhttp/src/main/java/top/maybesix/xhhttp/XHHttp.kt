@@ -1,7 +1,6 @@
 package top.maybesix.xhhttp
 
 import android.content.Context
-import okhttp3.internal.http.HttpHeaders
 import top.maybesix.xhhttp.config.XHHttpConfig
 import top.maybesix.xhhttp.exception.HttpException
 import top.maybesix.xhhttp.invocation.BaseInvocationHandler
@@ -38,10 +37,6 @@ object XHHttp {
     //延迟xxms重试
     var retryDelay = DEFAULT_RETRY_DELAY
 
-
-    //全局公共请求头
-    private val mCommonHeaders
-            : HttpHeaders? = null
 
     //全局公共请求参数
     private val mCommonParams = ""

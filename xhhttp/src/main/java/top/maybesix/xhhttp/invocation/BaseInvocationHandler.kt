@@ -253,9 +253,9 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
         val request = builder.build()
         //打印相关参数
         logD("=====================request的参数====================")
-        request.headers().logD()
-        request.body().logD()
-        request.method().logD()
+        request.headers.logD()
+        request.body.logD()
+        request.method.logD()
         return request
     }
 
@@ -276,7 +276,7 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
         }
         try {
             val response: Response = call.execute()
-            data = response.body()?.string() ?: ""
+            data = response.body?.string() ?: ""
             "===================response===================".logD()
             "response：$response".logD()
             "data: $data".logD()
