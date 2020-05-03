@@ -58,7 +58,7 @@ object XHHttp {
      */
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T> getInstance(clazz: Class<T>,config: XHHttpConfig ?): T {
+    fun <T> getInstance(clazz: Class<T>, config: XHHttpConfig? = null): T {
         if (context == null) {
             throw HttpException("初始化XHHttp失败！")
         }
