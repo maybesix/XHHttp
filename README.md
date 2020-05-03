@@ -22,6 +22,9 @@ http实现：OkHttp3
 
 ```
 	dependencies {
+            //需要添加反射库
+            implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.71'
+
 	        implementation 'com.github.maybesix:XHHttp:Tag'
 	}
 
