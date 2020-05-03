@@ -1,4 +1,5 @@
 # XHHttp
+[![](https://jitpack.io/v/maybesix/XHHttp.svg)](https://jitpack.io/#maybesix/XHHttp)
 
 #### 介绍
 一个简单好用http请求框架
@@ -9,7 +10,22 @@
 http实现：OkHttp3
 
 #### 使用说明
+```
+添加
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
 
+```
+	dependencies {
+	        implementation 'com.github.maybesix:XHHttp:Tag'
+	}
+
+```
 1.定义一个接口
 ```kotlin
 interface HttpRequest {
