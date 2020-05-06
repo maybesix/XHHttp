@@ -105,7 +105,15 @@ object XHHttpUtils {
                         }
                     }
                 }
-
+                "successCode" -> {
+                    if (filed.annotations.isNotEmpty()) {
+                        filed.annotations.forEach {
+                            if (it is ApiSuccessCode) {
+                                apiResult.successCode = it.value
+                            }
+                        }
+                    }
+                }
             }
 
         }

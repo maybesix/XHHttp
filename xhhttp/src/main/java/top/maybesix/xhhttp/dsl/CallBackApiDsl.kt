@@ -1,12 +1,11 @@
 package top.maybesix.xhhttp.dsl
 
+import android.os.Looper
 import com.alibaba.fastjson.JSON
-import top.maybesix.xhhttp.XHHttp
 import top.maybesix.xhhttp.callback.ObserverCallBack
 import top.maybesix.xhhttp.model.ApiResult
 import top.maybesix.xhhttp.util.XHHttpUtils
 import top.maybesix.xhhttp.util.XHHttpUtils.logE
-import java.lang.reflect.ParameterizedType
 
 
 /**
@@ -19,9 +18,12 @@ import java.lang.reflect.ParameterizedType
  * ps: CallBackDsl.()这种语法相当于CallBackDsl的一个扩展函数,
  * 把CallBackDsl当做这个函数的this,所以该函数中可以不用this.
  * 这样就可以调用CallBackDsl的参数和方法
+ * <reified  : ApiResult<T>, T>
  */
-inline fun <reified T, reified A> callbackApiOf(initDsl: CallBackApiDsl<T, A>.() -> Unit): ObserverCallBack {
-    val dsl = CallBackApiDsl<T, A>()
+inline fun <reified A : ApiResult<T>, reified T> callbackApiOf(initDsl: CallBackApiDsl<T>.() -> Unit): ObserverCallBack {
+    val handler = android.os.Handler(Looper.getMainLooper())
+
+    val dsl = CallBackApiDsl<T>()
     //初始化dsl
     dsl.initDsl()
 
@@ -31,66 +33,49 @@ inline fun <reified T, reified A> callbackApiOf(initDsl: CallBackApiDsl<T, A>.()
         }
 
         override fun onHandle(response: String?, errorCode: Int) {
+            var code: Int = -1
+            var bean: T? = null
+            val apiResult = ApiResult<T>()
+
             try {
-                val classZ = T::class.java
-                if (ApiResult::class.java.isAssignableFrom(classZ)) {
-                    val apiResultParse = XHHttpUtils.parseApiResult(classZ, response)
-                    val type =
-                        (classZ.genericSuperclass as ParameterizedType).actualTypeArguments[0]
-                    val apiResult = ApiResult<A>()
-                    //最后处理ApiResult
-                    if (apiResultParse != null && apiResultParse.isOk()) {
-                        try {
-                            val data = apiResultParse.data
-                            val bean: A? = try {
-                                JSON.parseObject(data, type)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                val classA = A::class.java
-                                val classAT =
-                                    ((classA.genericSuperclass as ParameterizedType?)!!.actualTypeArguments[0]) as Class<T>
-                                JSON.parseArray(data, classAT) as A
-                            }
-                            apiResult.data = bean
-                            "===================onSuccess()===================".logE()
-                            dsl.mSuccess?.invoke(apiResult)
-                        } catch (e: Exception) {
-                            "===================onException()===================".logE()
-                            if (XHHttp.isDebug) {
-                                e.printStackTrace()
-                            }
-                            dsl.mException?.invoke(e)
-                        }
-                    } else {
-                        "===================onFailed()===================".logE()
-                        val failResult = ApiResult<A>()
-                        failResult.code = apiResultParse?.code ?: -1
-                        failResult.msg = apiResultParse?.msg ?: ""
-                        failResult.sourceData = response ?: ""
-                        dsl.mFailed?.invoke(failResult)
-                    }
+                val classZ = A::class.java
+                val apiResultParse = XHHttpUtils.parseApiResult(classZ, response)
+                //最后处理ApiResult
+                if (apiResultParse != null && apiResultParse.isOk()) {
+                    val data = apiResultParse.data
+                    bean = JSON.parseObject(data, T::class.java)
+                    apiResult.data = bean
+                    apiResult.code = apiResultParse.code
+                    apiResult.msg = apiResultParse.msg
+                    code = 0
                 } else {
-                    logE("使用callbackApiOf必须使用ApiResult的子类")
-                    throw Exception("使用callbackApiOf必须使用ApiResult的子类")
-                    //其他类型的数据处理
+                    logE("请求码错误")
+                    code = -2
                 }
             } catch (e: Exception) {
-                "===================onException()===================".logE()
-                if (XHHttp.isDebug) {
-                    e.printStackTrace()
+                e.printStackTrace()
+                code = -100
+            }
+            if (code == 0 && bean != null) {
+                "===================onSuccess()===================".logE()
+                handler.post {
+                    dsl.mSuccess?.invoke(apiResult)
                 }
-                dsl.mException?.invoke(e)
+            } else {
+                "===================onFailed()===================".logE()
+                handler.post {
+                    dsl.mFailed?.invoke(response ?: "", code)
+                }
             }
         }
 
         override fun onComplete() {
-            "===================onComplete()===================".logE()
             dsl.mComplete?.invoke()
         }
     }
 }
 
-class CallBackApiDsl<T, A> {
+class CallBackApiDsl<T> {
     var mStart: (() -> Unit)? = null
 
     fun start(listener: () -> Unit) {
@@ -100,9 +85,9 @@ class CallBackApiDsl<T, A> {
     /**
      * 网络请求成功的回调
      */
-    var mSuccess: ((result: ApiResult<A>) -> Unit)? = null
+    var mSuccess: ((result: ApiResult<T>) -> Unit)? = null
 
-    fun success(listener: (result: ApiResult<A>) -> Unit) {
+    fun success(listener: (result: ApiResult<T>) -> Unit) {
         mSuccess = listener
     }
 
@@ -110,9 +95,9 @@ class CallBackApiDsl<T, A> {
     /**
      * 网络轻功但是状态码不为200
      */
-    var mFailed: ((result: ApiResult<A>) -> Unit)? = null
+    var mFailed: ((result: String, error: Int) -> Unit)? = null
 
-    fun failed(listener: (result: ApiResult<A>) -> Unit) {
+    fun failed(listener: (result: String, error: Int) -> Unit) {
         mFailed = listener
     }
 
@@ -122,9 +107,4 @@ class CallBackApiDsl<T, A> {
         mComplete = listener
     }
 
-    var mException: ((e: Exception) -> Unit)? = null
-
-    fun exception(listener: (e: Exception) -> Unit) {
-        mException = listener
-    }
 }

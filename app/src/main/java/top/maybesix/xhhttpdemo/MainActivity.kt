@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import top.maybesix.xhhttp.XHHttp
+import top.maybesix.xhhttp.dsl.callbackApiOf
 import top.maybesix.xhhttp.dsl.callbackOf
 import top.maybesix.xhhttpdemo.param.Author
 
@@ -44,13 +45,7 @@ class MainActivity : AppCompatActivity() {
                 "kotlin"
             )
         }
-        HttpRequest.instance().getChapters(callbackOf<String> {
-            start { }
-            success {}
-            failed { data, error ->
-            }
-            complete { }
-        })
+
         //发起请求，通过@Path注解动态替换url中的字段
         btn_get_path.setOnClickListener {
             HttpRequest.instance().getArticleJson(
@@ -74,10 +69,27 @@ class MainActivity : AppCompatActivity() {
                         success {
                             showResult(it)
                         }
+
                     },
                     Author("鸿洋", "777")
                 )
         }
+
+        //直接发起get请求，使用apiresult接收
+        btn_get_param_api.setOnClickListener {
+            HttpRequest.instance().getChapters(
+                callbackApiOf<MyApiResult<String>, String> {
+                    success {
+                        showResult(it.code.toString())
+                        showResult(it.msg)
+                    }
+                    failed { data, error ->
+                        showResult(error.toString())
+                    }
+                }
+            )
+        }
+
     }
 
     private fun showResult(result: String) {

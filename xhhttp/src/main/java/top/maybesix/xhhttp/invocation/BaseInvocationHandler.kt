@@ -102,7 +102,6 @@ class BaseInvocationHandler(config: XHHttpConfig?) : InvocationHandler {
         run breaking@{
             method?.kotlinFunction?.parameters?.forEachIndexed { index, kParameter ->
                 if (kParameter.type.toString() == ObserverCallBack::class.java.name) {
-                    logE("获取到了类型为ObserverCallBack的类")
                     observerName = kParameter.name ?: callbackName
                     return@breaking
                 }

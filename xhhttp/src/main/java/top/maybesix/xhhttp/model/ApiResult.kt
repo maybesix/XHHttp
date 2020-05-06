@@ -8,10 +8,10 @@ import com.alibaba.fastjson.JSON
  * @desc TODO.
  */
 open class ApiResult<T>(open var code: Int, open var msg: String, open var data: T?) {
-    constructor() : this(0, "", null)
+    constructor() : this(-1, "-1", null)
 
-    var sourceData: String = ""
-    var successCode = 0
+    var sourceData: String = "123"
+    open var successCode: Int = 200
     fun isOk(): Boolean {
         return code == successCode
     }

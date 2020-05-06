@@ -43,5 +43,11 @@
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
             android:text="使用实体类作为参数" />
+        <Button
+            android:id="@+id/btn_get_param_api"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="使用CallBackApiOf类作为接收" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
